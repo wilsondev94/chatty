@@ -85,13 +85,14 @@ const ChatRoom = () => {
               autoFocus
               type="text"
               value={input}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && input.trim()) {
+                  // TODO: Send message
                   inputRef.current?.focus();
                 }
               }}
               placeholder="Type message..."
-              onChange={(e) => setInput(e.target.value)}
               className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100 placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm"
             />
           </div>
