@@ -2,10 +2,12 @@
 
 import { useSendMessage } from "@/hooks/mutation-services/useSendMessage";
 import { useGetMessages } from "@/hooks/query-services/useGetMessages";
+import { useGetTimeToLive } from "@/hooks/query-services/useGetTimeToLive";
 import { useUsername } from "@/hooks/use-username";
 import { useRealtime } from "@/lib/realtime-client";
+import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -28,6 +30,35 @@ const ChatRoom = () => {
   const { sendMessage, isPending } = useSendMessage(roomId, username, setInput);
 
   const { messages, refetch } = useGetMessages(roomId);
+  // ttl means Time To Live: the time for which a chat room will expire
+  const { ttlData } = useGetTimeToLive(roomId);
+
+  useEffect(() => {
+    if (ttlData?.ttl !== undefined) {
+      setTimeRemaining(ttlData.ttl);
+    }
+  }, [ttlData]);
+
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining < 0) return;
+
+    if (timeRemaining === 0) {
+      router.push("/?destroyed=true");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeRemaining, router]);
 
   // Subscribing to realtime events
   useRealtime({
@@ -122,7 +153,7 @@ const ChatRoom = () => {
                 </span>
 
                 <span className="text-[10px] text-zinc-600">
-                  {/* {format(message.timestamp, "HH:mm")} */}
+                  {format(message.timestamp, "HH:mm")}
                 </span>
               </div>
 
