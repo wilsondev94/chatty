@@ -1,8 +1,10 @@
 "use client";
 
 import { useSendMessage } from "@/hooks/mutation-services/useSendMessage";
+import { useGetMessages } from "@/hooks/query-services/useGetMessages";
 import { useUsername } from "@/hooks/use-username";
-import { useParams } from "next/navigation";
+import { useRealtime } from "@/lib/realtime-client";
+import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
@@ -12,6 +14,7 @@ function formatTimeRemaining(seconds: number) {
 }
 
 const ChatRoom = () => {
+  const router = useRouter();
   const params = useParams();
   const roomId = params.roomId as string;
 
@@ -23,6 +26,23 @@ const ChatRoom = () => {
   const { username } = useUsername();
 
   const { sendMessage, isPending } = useSendMessage(roomId, username, setInput);
+
+  const { messages, refetch } = useGetMessages(roomId);
+
+  // Subscribing to realtime events
+  useRealtime({
+    channels: [roomId],
+    events: ["chat.message", "chat.destroy"],
+    onData: ({ event }) => {
+      if (event === "chat.message") {
+        refetch();
+      }
+
+      if (event === "chat.destroy") {
+        router.push("/?destroyed=true");
+      }
+    },
+  });
 
   const copyLink = () => {
     // current page URL
@@ -78,7 +98,41 @@ const ChatRoom = () => {
       </header>
 
       {/* MESSAGES */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"></div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+        {messages?.messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-zinc-600 text-sm font-mono">
+              No messages yet, start the conversation.
+            </p>
+          </div>
+        )}
+
+        {messages?.messages.map((message) => (
+          <div key={message.id} className="flex flex-col items-start">
+            <div className="max-w-[80%] group">
+              <div className="flex items-baseline gap-3 mb-1">
+                <span
+                  className={`text-xs font-bold ${
+                    message.sender === username
+                      ? "text-green-500"
+                      : "text-blue-500"
+                  }`}
+                >
+                  {message.sender === username ? "YOU" : message.sender}
+                </span>
+
+                <span className="text-[10px] text-zinc-600">
+                  {/* {format(message.timestamp, "HH:mm")} */}
+                </span>
+              </div>
+
+              <p className="text-sm text-zinc-300 leading-relaxed break-all">
+                {message.text}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="p-4 border-t border-zinc-800 bg-zinc-900/30">
         <div className="flex gap-4">
