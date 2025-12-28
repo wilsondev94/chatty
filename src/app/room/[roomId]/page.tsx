@@ -1,17 +1,9 @@
 "use client";
 
 import { useSendMessage } from "@/hooks/mutation-services/useSendMessage";
-import { nanoid } from "nanoid";
+import { useUsername } from "@/hooks/use-username";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-
-const ANIMALS = ["wolf", "hawk", "bear", "shark"];
-const USERNAME_STORAGE_KEY = "chat_username";
-
-const generateUsername = () => {
-  const word = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `anonymous-${word}-${nanoid(5)}`;
-};
+import { useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -28,23 +20,7 @@ const ChatRoom = () => {
   const [copyStatus, setCopyStatus] = useState("COPY");
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
-  const [username, setUsername] = useState("");
-  useEffect(() => {
-    const main = () => {
-      const storedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
-
-      if (storedUsername) {
-        setUsername(storedUsername);
-        return;
-      }
-
-      const generatedUsername = generateUsername();
-      localStorage.setItem(USERNAME_STORAGE_KEY, generatedUsername);
-      setUsername(generatedUsername);
-    };
-
-    main();
-  }, []);
+  const { username } = useUsername();
 
   const { sendMessage, isPending } = useSendMessage(roomId, username, setInput);
 

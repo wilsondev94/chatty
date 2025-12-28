@@ -1,42 +1,15 @@
 "use client";
 
 import { useCreateRoom } from "@/hooks/mutation-services/useCreateRoom";
-import { nanoid } from "nanoid";
+import { useUsername } from "@/hooks/use-username";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-
-const ANIMALS = ["wolf", "hawk", "bear", "shark"];
-const USERNAME_STORAGE_KEY = "chat_username";
-
-const generateUsername = () => {
-  const word = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `anonymous-${word}-${nanoid(5)}`;
-};
 
 export default function Home() {
-  // const { username } = useUsername();
-  const [username, setUsername] = useState("");
+  const { username } = useUsername();
 
   const searchParams = useSearchParams();
   const wasDestroyed = searchParams.get("destroyed") === "true";
   const error = searchParams.get("error");
-
-  useEffect(() => {
-    const main = () => {
-      const storedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
-
-      if (storedUsername) {
-        setUsername(storedUsername);
-        return;
-      }
-
-      const generatedUsername = generateUsername();
-      localStorage.setItem(USERNAME_STORAGE_KEY, generatedUsername);
-      setUsername(generatedUsername);
-    };
-
-    main();
-  }, []);
 
   const { createRoom } = useCreateRoom();
 
