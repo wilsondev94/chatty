@@ -1,5 +1,6 @@
 "use client";
 
+import { useDestroyRoom } from "@/hooks/mutation-services/useDestroyRoom";
 import { useSendMessage } from "@/hooks/mutation-services/useSendMessage";
 import { useGetMessages } from "@/hooks/query-services/useGetMessages";
 import { useGetTimeToLive } from "@/hooks/query-services/useGetTimeToLive";
@@ -32,6 +33,8 @@ const ChatRoom = () => {
   const { messages, refetch } = useGetMessages(roomId);
   // ttl means Time To Live: the time for which a chat room will expire
   const { ttlData } = useGetTimeToLive(roomId);
+
+  const { destroyRoom } = useDestroyRoom(roomId);
 
   useEffect(() => {
     if (ttlData?.ttl !== undefined) {
@@ -122,7 +125,10 @@ const ChatRoom = () => {
           </div>
         </div>
 
-        <button className="text-xs bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-all group flex items-center gap-2 disabled:opacity-50">
+        <button
+          onClick={() => destroyRoom()}
+          className="text-xs bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-all group flex items-center gap-2 disabled:opacity-50"
+        >
           <span className="group-hover:animate-pulse">💣</span>
           DESTROY NOW
         </button>
