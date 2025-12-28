@@ -1,7 +1,17 @@
 "use client";
 
+import { useSendMessage } from "@/hooks/mutation-services/useSendMessage";
+import { nanoid } from "nanoid";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const ANIMALS = ["wolf", "hawk", "bear", "shark"];
+const USERNAME_STORAGE_KEY = "chat_username";
+
+const generateUsername = () => {
+  const word = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+  return `anonymous-${word}-${nanoid(5)}`;
+};
 
 function formatTimeRemaining(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -15,9 +25,28 @@ const ChatRoom = () => {
 
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-
   const [copyStatus, setCopyStatus] = useState("COPY");
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    const main = () => {
+      const storedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
+
+      if (storedUsername) {
+        setUsername(storedUsername);
+        return;
+      }
+
+      const generatedUsername = generateUsername();
+      localStorage.setItem(USERNAME_STORAGE_KEY, generatedUsername);
+      setUsername(generatedUsername);
+    };
+
+    main();
+  }, []);
+
+  const { sendMessage, isPending } = useSendMessage(roomId, username, setInput);
 
   const copyLink = () => {
     // current page URL
@@ -88,7 +117,7 @@ const ChatRoom = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && input.trim()) {
-                  // TODO: Send message
+                  sendMessage({ text: input });
                   inputRef.current?.focus();
                 }
               }}
@@ -99,8 +128,10 @@ const ChatRoom = () => {
 
           <button
             onClick={() => {
+              sendMessage({ text: input });
               inputRef.current?.focus();
             }}
+            disabled={!input.trim() || isPending}
             className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             SEND
