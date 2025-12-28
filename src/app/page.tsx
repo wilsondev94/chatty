@@ -3,8 +3,19 @@
 import { useCreateRoom } from "@/hooks/mutation-services/useCreateRoom";
 import { useUsername } from "@/hooks/use-username";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function Home() {
+const Page = () => {
+  return (
+    <Suspense>
+      <Home />
+    </Suspense>
+  );
+};
+
+export default Page;
+
+function Home() {
   const { username } = useUsername();
 
   const searchParams = useSearchParams();
